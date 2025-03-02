@@ -373,8 +373,11 @@ module.exports = function (RED) {
         }
 
         let { username, password, site, ip, port, unifios, ssl } = server;
+        // get message filters from config or default values
+        let messages = config.messages || ['events'];
+        let events = config.events || ['EVT_WU_Connected', 'EVT_WU_Disconnected', 'EVT_WU_Roam', 'EVT_WU_Roam_Radio', 'EVT_WG_Connected', 'EVT_WG_Disconnected', 'EVT_WG_Roam', 'EVT_WG_Roam_Radio', 'EVT_LU_Disconnected', 'EVT_LU_Connected'];
 
-        const controllerWS = new unifiWS.ControllerWS(ip, port, unifios, ssl, username, password, site);
+        const controllerWS = new unifiWS.ControllerWS(ip, port, unifios, ssl, username, password, site, messages, events);
 
         //controllerWS.loginws(handleDataCallback);
 

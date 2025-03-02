@@ -3,7 +3,7 @@ const { CookieJar } = require('tough-cookie');
 const { HttpCookieAgent, HttpsCookieAgent } = require('http-cookie-agent/http');
 const WebSocket = require('ws');
 
-var ControllerWS = function (hostname, port, unifios, ssl, username, password, site) {
+var ControllerWS = function (hostname, port, unifios, ssl, username, password, site, allowedMessages, allowedEvents) {
 
     var _self = this;
     _self._cookieJar = new CookieJar();
@@ -67,24 +67,26 @@ var ControllerWS = function (hostname, port, unifios, ssl, username, password, s
 
                     _ws.on('message', function message(data) {
                         try {
-                            var obj = JSON.parse(data);
-                            var listenTo = ['EVT_WU_Connected', 'EVT_WU_Disconnected', 'EVT_WU_Roam', 'EVT_WU_Roam_Radio', 'EVT_WG_Connected', 'EVT_WG_Disconnected', 'EVT_WG_Roam', 'EVT_WG_Roam_Radio', 'EVT_LU_Disconnected', 'EVT_LU_Connected']
-                            if (obj.meta.message == 'events') {
-                                if (listenTo.indexOf(obj.data[0].key) == -1) {
-                                    //nothing
-                                    //console.log('-----------------------NEW EVENT-----------------------');
-                                    //console.log('%s', data);
-                                    //console.log('-----------------------NEW EVENT-----------------------');
-                                } else {
-                                    if (typeof (cb) === 'function') {
+                            const obj = JSON.parse(data);
+                            if (allowedMessages.length === 0) {
+                                // no filter, all messages are allowed
+                                cb(false, obj);
+                                return
+                            }
+                            if (allowedMessages.includes(obj.meta.message)) {
+                                // this type of message is allowed
+                                if (obj.meta.message == 'events') {
+                                    // it is an event, apply an additional filter on the event key
+                                    if (allowedEvents.includes(obj.data[0].key)) {
                                         cb(false, obj);
                                     }
+                                } else {
+                                    cb(false, obj);
                                 }
-                            } else if (obj.meta.message == 'ping-test:update') {
-                                cb(false, obj);
                             }
                         } catch (error) {
-                            //Ignore this message
+                            // send back the error
+                            cb(error);
                         }
                     });
 
