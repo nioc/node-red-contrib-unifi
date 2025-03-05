@@ -45,10 +45,15 @@ let ControllerWS = function (hostname, port, unifios, ssl, username, password, s
             const cookies = await jar.getCookieString(_self._baseurl)
 
             // prepare websocket URL
-            const baseurl = _self._baseurl.replace('https://', 'wss://')
-            var eventsUrl = baseurl + '/wss/s/<SITE>/events'.replace('<SITE>', _self._site);
-            if (_self._unifios)
-                eventsUrl = baseurl + '/proxy/network/wss/s/<SITE>/events'.replace('<SITE>', _self._site);
+            const queryParams = new URLSearchParams();
+            // request client messages in query param
+            if (allowedMessages.length === 0 || allowedMessages.includes('client:sync')) {
+                queryParams.append('clients', 'v2');
+            }
+            const eventsUrl = _self._baseurl.replace('https://', 'wss://')+`${_self._unifios
+                ? `/proxy/network/wss/s/${_self._site}/events`
+                : `/wss/s/${_self._site}/events`
+            }?`+queryParams.toString();
 
             // declare events handlers
             _self._needReconnect = true;
